@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Equipment Catalog</title>
-    <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -16,6 +15,11 @@
 
         body {
             background-color: #a8a8a8;
+            background-image: url('BG.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             font-family: 'Inter', Arial, sans-serif;
             height: 100vh;
             overflow: hidden;
@@ -28,9 +32,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            /* Center rows vertically by default */
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            padding: 5px 20px;
+            padding: 2vh 2vw;
+            /* use relative padding */
         }
 
         #gridView.hidden {
@@ -40,13 +47,13 @@
         .grid-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            width: 90vw;
-            max-width: 1700px;
+            width: 100%;
+            height: 23vh;
+            /* divide screen height effectively */
+            max-width: 1400px;
             align-items: stretch;
             justify-items: center;
-            gap: 15px;
-            margin-bottom: 0px;
-            padding: 3px 12px;
+            gap: 1vw;
             border-radius: 12px;
             cursor: pointer;
             transition: background 0.3s ease;
@@ -64,11 +71,25 @@
             /* Keeps text at the bottom */
             height: 100%;
             width: 100%;
+            border-radius: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .grid-cell.selected {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
         }
 
         .grid-cell canvas {
             display: block;
             flex-shrink: 0;
+            max-width: 100%;
+            /* prevent overflow horizontally */
+            max-height: 18vh;
+            /* prevent overflow vertically, leave room for text */
+            object-fit: contain;
+            /* keep proportions if scaled down by CSS */
         }
 
         .grid-label {
@@ -85,7 +106,44 @@
             justify-content: center;
         }
 
+        /* Responsive text sizing for smaller screens */
+        @media (max-width: 1200px) {
+            .grid-label {
+                font-size: 9px;
+            }
 
+            .grid-row {
+                height: 22vh;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .grid-row {
+                grid-template-columns: repeat(2, 1fr);
+                height: auto;
+                min-height: 25vh;
+                margin-bottom: 2vh;
+            }
+
+            .grid-cell canvas {
+                max-height: 20vh;
+                width: auto !important;
+                height: auto !important;
+            }
+
+            #gridView {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                justify-content: flex-start;
+                padding-top: 5vh;
+                padding-bottom: 5vh;
+            }
+
+            body {
+                overflow-y: auto;
+            }
+        }
 
         /* ===== CAROUSEL VIEW ===== */
         #carouselView {
@@ -94,7 +152,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #a8a8a8;
+            background: transparent;
             display: none;
             flex-direction: column;
             z-index: 100;
@@ -137,31 +195,27 @@
             flex-direction: column;
             align-items: center;
             overflow: visible;
-            /* No position transitions — instant snap, only opacity animates */
-            transition: opacity 0.35s ease;
+            /* Now we want position AND size AND opacity to animate smoothly */
+            transition: opacity 0.4s ease, left 0.4s ease, top 0.4s ease, width 0.4s ease, height 0.4s ease;
         }
 
         .carousel-item canvas {
             display: block;
+            transition: width 0.4s ease, height 0.4s ease;
         }
 
         .carousel-label {
-            display: none;
+            margin-top: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: #444;
+            white-space: pre-wrap;
+            font-weight: 500;
         }
 
         .carousel-item.center .carousel-label {
-            display: block;
-            position: fixed;
-            top: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-top: 0;
-            text-align: center;
-            font-size: 24px;
-            color: #111;
-            font-weight: 600;
-            white-space: pre-wrap;
-            z-index: 300;
+            display: none;
+            /* Hide the old floating label for the center item, it moves to the card */
         }
 
         #variationInfo {
@@ -194,9 +248,45 @@
             background: rgba(0, 0, 0, 0.65);
         }
 
+        #modelDescription {
+            position: absolute;
+            bottom: 40px;
+            /* moved further down to clear models */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 440px;
+            /* slightly smaller box */
+            text-align: center;
+            font-size: 11px;
+            /* smaller text */
+            color: #222;
+            line-height: 1.3;
+            pointer-events: none;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 8px 15px;
+            /* smaller padding */
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: opacity 0.35s ease;
+        }
+
+        #modelDescription strong {
+            display: block;
+            font-size: 14px;
+            /* somewhat smaller header */
+            margin-bottom: 5px;
+            color: #111;
+        }
+
         #hintOverlay {
             position: absolute;
-            bottom: 50px;
+            bottom: 10px;
+            /* move hint overlay even lower so it doesn't overlap to desc */
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.55);
@@ -244,6 +334,7 @@
 </head>
 
 <body>
+
     <div id="gridView"></div>
 
     <div id="carouselView">
@@ -256,6 +347,7 @@
             <div id="variationDots"></div>
         </div>
         <div id="hintOverlay">◀ ▶ — листать | ▲ ▼ — вариации | Мышь — вращать центральную модель</div>
+        <div id="modelDescription"></div>
     </div>
 
     <script type="importmap">
@@ -270,13 +362,12 @@
     <script type="module">
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         // ============ DATA ============
         const rows = [
             [
-                { file: 'tech/lcd_65.glb', label: 'LCD 65"', gW: 180, gH: 100 },
+                { file: 'tech/lcd_65.glb', label: 'LCD 65"', gW: 130, gH: 80 },
                 { file: 'tech/lcd_sphere_d1000.glb', label: 'LCD sphere\nD=1000', gW: 120, gH: 115 },
                 { file: 'tech/led_panel_1x2.5_p1.9.glb', label: '1 x 2.5 m\nP1.9', gW: 230, gH: 155 },
                 { file: 'tech/led_panel_4x2.5_p1.9.glb', label: '4 x 2.5 m\nP1.9', gW: 380, gH: 170 },
@@ -295,10 +386,7 @@
             ],
             [
                 { file: 'tech/xbox_kinect.glb', label: 'XBOX\nkinnect', gW: 135, gH: 60, vCenter: true, tiltZ: 15 },
-                {
-                    file: 'tech/platforma_rgb.glb', label: 'platforma\nRGB', gW: 280, gH: 95, vCenter: true, customPadding: 1.5,
-                    tiltZ: 15
-                },
+                { file: 'tech/platforma_rgb.glb', label: 'platforma\nRGB', gW: 280, gH: 95, vCenter: true, customPadding: 1.5, tiltZ: 15 },
                 { file: 'tech/vr_ar.glb', label: 'VR / AR', gW: 110, gH: 185 },
                 { file: 'tech/arcade.glb', label: 'ARCADE', gW: 135, gH: 185 },
             ],
@@ -334,8 +422,7 @@
                         if (c.isMesh && c.material) {
                             const n = c.material.name ? c.material.name.toLowerCase() : '';
                             const mName = c.name ? c.name.toLowerCase() : '';
-                            let isGlass = n.includes('glass') || n.includes('стекло') || n.includes('screen_glass') || mName.includes('glass')
-                                || mName.includes('glass_');
+                            let isGlass = n.includes('glass') || n.includes('стекло') || n.includes('screen_glass') || mName.includes('glass') || mName.includes('glass_');
 
                             // Specific fix for ARCADE white glass
                             if (n.includes('clean glass')) {
@@ -349,11 +436,6 @@
                                 c.material.metalness = 0.5;
                                 c.material.needsUpdate = true;
                                 c.renderOrder = 1;
-                            } else {
-                                c.material.metalness = 0.6;
-                                c.material.roughness = 0.2;
-                                c.material.envMapIntensity = 1.0;
-                                c.material.needsUpdate = true;
                             }
                         }
                     });
@@ -376,14 +458,8 @@
             return r;
         }
 
-        const Mesh = THREE.Mesh; // Alias helper
-
-        function applyLighting(s) {
-            const toRemove = [];
-            s.children.forEach(c => { if (c.isLight) toRemove.push(c); });
-            toRemove.forEach(c => s.remove(c));
-            s.environment = null;
-
+        function createScene() {
+            const s = new THREE.Scene();
             s.add(new THREE.AmbientLight(0xffffff, 0.8));
             const d1 = new THREE.DirectionalLight(0xffffff, 1.5);
             d1.position.set(5, 8, 3);
@@ -391,11 +467,6 @@
             const d2 = new THREE.DirectionalLight(0xffffff, 0.4);
             d2.position.set(-3, 4, -5);
             s.add(d2);
-        }
-
-        function createScene() {
-            const s = new THREE.Scene();
-            applyLighting(s);
             return s;
         }
 
@@ -416,9 +487,20 @@
             let camDist = Math.abs(maxRadius / Math.sin(fovRad / 2));
 
             // if tall and narrow
-            if (aspect < 1) { camDist = camDist / aspect; }
+            if (aspect < 1) {
+                camDist = camDist / aspect;
+            }
 
-            camera.position.set(camDist * distMult, 0, 0); // Frontal from +X
+            // Safe 3/4 setup: pull camera further out by 1.35x to guarantee no bounding box crops when rotated!
+            const safeDist = camDist * distMult * 1.35;
+            const angleY = Math.PI / 4; // 45 deg Y
+            const angleX = Math.PI / 7; // 25 deg X
+
+            camera.position.set(
+                safeDist * Math.cos(angleX) * Math.cos(angleY),
+                safeDist * Math.sin(angleX),
+                safeDist * Math.cos(angleX) * Math.sin(angleY)
+            );
             camera.lookAt(0, 0, 0);
             camera.near = camDist * 0.01;
             camera.far = camDist * 10;
@@ -439,16 +521,27 @@
 
             const newBox = new THREE.Box3().setFromObject(model);
             const newSize = newBox.getSize(new THREE.Vector3());
+
             const fov = camera.fov * (Math.PI / 180);
             const halfTan = Math.tan(fov / 2);
             const fitH = newSize.y / (2 * halfTan);
-            const fitW = newSize.z / (2 * halfTan * aspect); // View is from +X, horizontal depth is Z 
+            const fitW = newSize.z / (2 * halfTan * aspect); // View is from +X, horizontal depth is Z
             const dist = Math.max(fitH, fitW) * padding;
 
-            // Position camera so y = 0(floor) is 10 % above the bottom of the viewport 
-            // This prevents the base/feet of models from being clipped at the edge 
+            // Position camera so y=0 (floor) is 10% above the bottom of the viewport
+            // This prevents the base/feet of models from being clipped at the edge
+            // And use extra padding (1.35x) to prevent rotated corners from clipping
             const lookY = dist * halfTan * 0.88;
-            camera.position.set(dist, lookY, 0); // FRONT = +X 
+
+            const safeDist = dist * 1.35;
+            const angleY = Math.PI / 4; // 45 deg Y
+            const angleX = Math.PI / 7; // 25 deg X
+
+            camera.position.set(
+                safeDist * Math.cos(angleX) * Math.cos(angleY),
+                lookY + safeDist * Math.sin(angleX),
+                safeDist * Math.cos(angleX) * Math.sin(angleY)
+            );
             camera.lookAt(0, lookY, 0);
             camera.near = dist * 0.01;
             camera.far = dist * 10;
@@ -463,15 +556,7 @@
                 if (c.isMesh && c.material) {
                     const m = c.material.clone();
                     if (m.color) m.color.lerp(new THREE.Color(v.color), 0.45);
-                    if (m.emissive) {
-                        m.emissive = new THREE.Color(v.emissive);
-                        m.emissiveIntensity = 0.3;
-                    }
-
-                    // Add metallic and roughness properties for realism
-                    m.metalness = 0.5;
-                    m.roughness = 0.2;
-
+                    if (m.emissive) { m.emissive = new THREE.Color(v.emissive); m.emissiveIntensity = 0.3; }
                     c.material = m;
                 }
             });
@@ -487,11 +572,18 @@
 
             for (let ri = 0; ri < rows.length; ri++) {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'grid-row'; rowDiv.addEventListener('click', () => openCarousel(ri));
+                rowDiv.className = 'grid-row';
 
-                for (const item of rows[ri]) {
+                for (let ci = 0; ci < rows[ri].length; ci++) {
+                    const item = rows[ri][ci];
                     const cell = document.createElement('div');
                     cell.className = 'grid-cell';
+                    // Store indices for keyboard navigation
+                    cell.dataset.r = ri;
+                    cell.dataset.c = ci;
+                    cell.addEventListener('click', () => {
+                        openCarousel(ri, ci);
+                    });
 
                     const canvasWrapper = document.createElement('div');
                     canvasWrapper.style.flex = '1'; /* Take up all space above so text is at bottom */
@@ -563,7 +655,7 @@
         const variationDots = document.getElementById('variationDots');
         const hintOverlay = document.getElementById('hintOverlay');
 
-        let carouselActive = false;
+        let inCarousel = false;
         let currentRow = -1;
         let curIdx = 0;
         let curVar = 0;
@@ -571,25 +663,29 @@
         let centerCtrl = null;
         let carAnimId = null;
 
-        function openCarousel(ri) {
-            carouselActive = true;
-            currentRow = ri;
-            curIdx = 0;
-            curVar = 0;
-
+        function openCarousel(rowIndex, colIndex) {
+            inCarousel = true;
             gridView.classList.add('hidden');
-            carouselView.classList.add('active');
+            carouselView.style.display = 'flex';
+            setTimeout(() => carouselView.classList.add('active'), 50);
 
-            hintOverlay.style.opacity = '0.9';
-            setTimeout(() => { hintOverlay.style.opacity = '0'; }, 4000);
+            // Hide background from body since we need transparent carousel background over the global body BG
+            // but we only want to show it in carousel view? Actually, the background handles both.
 
-            buildCarouselItems(rows[ri]);
+            // We only show items from the selected row (category)
+            buildCarouselItems(rows[rowIndex], colIndex);
         }
 
         function closeCarousel() {
-            carouselActive = false;
+            inCarousel = false;
             carouselView.classList.remove('active');
-            gridView.classList.remove('hidden');
+            setTimeout(() => {
+                carouselView.style.display = 'none';
+                gridView.classList.remove('hidden');
+
+                // Keep grid cursor selection updated after closing
+                updateGridSelection();
+            }, 300);
 
             if (centerCtrl) { centerCtrl.dispose(); centerCtrl = null; }
             if (carAnimId) { cancelAnimationFrame(carAnimId); carAnimId = null; }
@@ -602,12 +698,13 @@
         navLeft.addEventListener('click', () => navCarousel(-1));
         navRight.addEventListener('click', () => navCarousel(1));
 
-        async function buildCarouselItems(row) {
+        async function buildCarouselItems(categoryRow, initialIdx) {
             carouselStrip.innerHTML = '';
             cItems = [];
+            curIdx = initialIdx; // Set initial index for carousel
 
-            for (let i = 0; i < row.length; i++) {
-                const d = row[i];
+            for (let i = 0; i < categoryRow.length; i++) {
+                const d = categoryRow[i];
                 const el = document.createElement('div');
                 el.className = 'carousel-item';
 
@@ -621,7 +718,6 @@
                 const bufH = baseH * BUFFER_MULT;
                 canvas.width = bufW;
                 canvas.height = bufH;
-
                 // CSS display size will be set in layoutCarousel
                 el.appendChild(canvas);
 
@@ -629,6 +725,7 @@
                 lbl.className = 'carousel-label';
                 lbl.textContent = d.label;
                 el.appendChild(lbl);
+
                 carouselStrip.appendChild(el);
 
                 const renderer = createRenderer(canvas, bufW, bufH);
@@ -644,8 +741,13 @@
                 } catch (e) {
                     console.warn('Carousel load err:', d.file, e);
                 }
-                cItems.push({ el, canvas, renderer, scene, camera, model, file: d.file, baseW, baseH });
+
+                cItems.push({
+                    el, canvas, renderer, scene, camera, model,
+                    file: d.file, baseW, baseH, label: d.label
+                });
             }
+
             layoutCarousel();
             updateVarUI();
             attachCenterControls();
@@ -660,10 +762,16 @@
 
             // All items on ONE horizontal line, centered vertically
             // Center item is large, side items are small thumbnails
-            const centerScale = 8.0; // center model multiplier — big!
-            const sideScale = 0.55; // side model multiplier
-            const sideSpacing = 130; // horizontal spacing between side items
-            const centerGap = 40; // gap between center item edge and first side item
+            // Center item is large, side items are small thumbnails
+            // We use fixed target sizes instead of scaling from grid width/height
+            // so all models appear roughly the same size in carousel.
+            const centerTargetSize = Math.min(W * 0.9, H * 0.9, 800);
+            const sideTargetSize = centerTargetSize * 0.25;
+            const sideSpacing = sideTargetSize + 60; // horizontal spacing between side items
+            const centerGap = 40;    // gap between center item edge and first side item
+
+            // Apply transition only if skipTransition is NOT true
+            const transRule = skipTransition ? 'none' : 'opacity 0.4s ease, left 0.4s ease, top 0.4s ease, width 0.4s ease, height 0.4s ease';
 
             for (let i = 0; i < cItems.length; i++) {
                 const c = cItems[i];
@@ -671,11 +779,12 @@
                 const isCenter = (i === curIdx);
                 const lbl = c.el.querySelector('.carousel-label');
 
+                c.el.style.transition = transRule;
+
                 if (isCenter) {
                     // ===== CENTER: large canvas =====
-                    let cW = Math.round(c.baseW * centerScale);
-                    let cH = Math.round(c.baseH * centerScale);
-
+                    let cW = centerTargetSize;
+                    let cH = centerTargetSize;
                     // Make central canvas essentially square equal to its largest dimension so rotation never clips html bounds
                     let maxD = Math.max(cW, cH);
                     cW = maxD;
@@ -702,6 +811,10 @@
                     // Center the item vertically and horizontally on screen
                     c.el.style.left = (cx - cW / 2) + 'px';
                     c.el.style.top = (cy - cH / 2) + 'px';
+                    // Explicitly set the width/height of the container to match the canvas so we can transition them
+                    c.el.style.width = cW + 'px';
+                    c.el.style.height = (cH + 40) + 'px';
+
                     c.el.style.opacity = '1';
                     c.el.style.zIndex = '10';
                     c.el.style.pointerEvents = 'auto';
@@ -709,13 +822,24 @@
 
                     lbl.style.marginTop = '6px';
 
+                    // Update dynamic text
+                    const descBox = document.getElementById('modelDescription');
+                    descBox.innerHTML = `<strong>${c.label}</strong>
+                        Диагональ 30", OLED матрица LG, прозрачность 45%<br>
+                        емкостная технология сенсорного экрана<br><br>
+                        Тип подсветки: OLED<br>
+                        Разрешение: 768 *1366 pix<br>
+                        Соотношение сторон: 9 : 16<br>
+                        Прозрачность 45%<br>
+                        Яркость: 200-600 кд/м² авторегулировка<br>
+                        Контрастность: 135000:1<br>
+                        Угол обзора: 178°/178°`;
+                    descBox.style.opacity = '1';
+
                 } else {
                     // ===== SIDE: small thumbnail on same horizontal line =====
-                    let dispW = Math.round(c.baseW * sideScale);
-                    let dispH = Math.round(c.baseH * sideScale);
-                    let dispMaxD = Math.max(dispW, dispH);
-                    dispW = dispMaxD;
-                    dispH = dispMaxD;
+                    let dispW = sideTargetSize;
+                    let dispH = sideTargetSize;
 
                     const bufW = dispW * BUFFER_MULT;
                     const bufH = dispH * BUFFER_MULT;
@@ -733,12 +857,8 @@
                     }
 
                     // Compute center item's width to know where sides start
-                    const cc = cItems[curIdx];
-                    let ccW = Math.round(cc.baseW * centerScale);
-                    let ccH = Math.round(cc.baseH * centerScale);
-                    let cMaxD = Math.max(ccW, ccH);
-                    ccW = cMaxD;
-                    ccH = cMaxD;
+                    let ccW = centerTargetSize;
+                    let ccH = centerTargetSize;
 
                     const mxW = W * 0.90;
                     const mxH = H * 0.85;
@@ -757,10 +877,13 @@
                         x = cx - ccW / 2 - centerGap - (-off) * sideSpacing + (sideSpacing - dispW);
                     }
 
-                    const opa = Math.abs(off) > 3 ? 0 : 0.6;
                     c.el.style.left = x + 'px';
                     c.el.style.top = sideY + 'px';
-                    c.el.style.opacity = opa;
+                    // Explicitly set dimensions of the container for smooth transition
+                    c.el.style.width = dispW + 'px';
+                    c.el.style.height = (dispH + 25) + 'px';
+
+                    c.el.style.opacity = Math.abs(off) > 3 ? '0' : '0.6';
                     c.el.style.zIndex = 5 - Math.abs(off);
                     c.el.style.pointerEvents = 'none';
                     c.el.classList.remove('center');
@@ -785,7 +908,7 @@
 
         function startCarouselRender() {
             function render() {
-                if (!carouselActive) return;
+                if (!inCarousel) return;
                 for (const c of cItems) {
                     if (!c.model) continue;
                     c.renderer.render(c.scene, c.camera);
@@ -800,36 +923,16 @@
             const ni = curIdx + dir;
             if (ni < 0 || ni >= cItems.length) return;
 
-            // Disable transition during reposition to prevent "flying"
-            for (const c of cItems) {
-                c.el.style.transition = 'none';
-                c.el.style.opacity = '0';
-            }
-
             if (centerCtrl) { centerCtrl.dispose(); centerCtrl = null; }
             curIdx = ni;
             curVar = 0;
 
-            // Reposition everything while invisible
-            layoutCarousel(true);
+            // Fade out the description briefly during transition
+            const descBox = document.getElementById('modelDescription');
+            descBox.style.opacity = '0';
 
-            // Force reflow then fade in
-            requestAnimationFrame(() => {
-                for (const c of cItems) {
-                    c.el.style.transition = 'opacity 0.35s ease';
-                }
-                requestAnimationFrame(() => {
-                    // Restore opacity based on center/side
-                    for (let i = 0; i < cItems.length; i++) {
-                        const off = i - curIdx; if (i === curIdx) {
-                            cItems[i].el.style.opacity = '1';
-                        } else {
-                            cItems[i].el.style.opacity = Math.abs(off) > 3 ? '0' :
-                                '0.6';
-                        }
-                    }
-                });
-            });
+            // Reposition everything WITH transition (skipTransition = false)
+            layoutCarousel(false);
 
             attachCenterControls();
             loadVar(0);
@@ -855,7 +958,8 @@
 
         function navVar(dir) {
             let nv = curVar + dir;
-            if (nv < 0) nv = VARIATION_COUNT - 1; if (nv >= VARIATION_COUNT) nv = 0;
+            if (nv < 0) nv = VARIATION_COUNT - 1;
+            if (nv >= VARIATION_COUNT) nv = 0;
             loadVar(nv);
         }
 
@@ -864,21 +968,69 @@
             variationDots.innerHTML = '';
             for (let i = 0; i < VARIATION_COUNT; i++) {
                 const d = document.createElement('div');
-                d.className = 'v-dot' + (i === curVar ? ' active' : ''); variationDots.appendChild(d);
+                d.className = 'v-dot' + (i === curVar ? ' active' : '');
+                variationDots.appendChild(d);
             }
         }
+
         // ============ INPUT ============
         document.addEventListener('keydown', (e) => {
-            if (!carouselActive) return;
-            if (e.key === 'ArrowLeft') { navCarousel(-1); e.preventDefault(); }
-            if (e.key === 'ArrowRight') { navCarousel(1); e.preventDefault(); }
-            if (e.key === 'ArrowUp') { navVar(-1); e.preventDefault(); }
-            if (e.key === 'ArrowDown') { navVar(1); e.preventDefault(); }
-            if (e.key === 'Escape') { closeCarousel(); e.preventDefault(); }
+            if (inCarousel) {
+                // Carousel Keyboard controls
+                if (e.key === 'ArrowRight') { navCarousel(1); e.preventDefault(); }
+                if (e.key === 'ArrowLeft') { navCarousel(-1); e.preventDefault(); }
+                if (e.key === 'ArrowUp') { navVar(-1); e.preventDefault(); }
+                if (e.key === 'ArrowDown') { navVar(1); e.preventDefault(); }
+                if (e.key === 'Escape') { closeCarousel(); e.preventDefault(); }
+            } else {
+                // Grid Keyboard navigation
+                if (e.key === 'ArrowRight') { moveGridSelection(0, 1); e.preventDefault(); }
+                else if (e.key === 'ArrowLeft') { moveGridSelection(0, -1); e.preventDefault(); }
+                else if (e.key === 'ArrowDown') { moveGridSelection(1, 0); e.preventDefault(); }
+                else if (e.key === 'ArrowUp') { moveGridSelection(-1, 0); e.preventDefault(); }
+                else if (e.key === 'Enter') {
+                    if (gridCurR >= 0 && gridCurC >= 0) {
+                        openCarousel(gridCurR, gridCurC);
+                        e.preventDefault();
+                    }
+                }
+            }
         });
 
         // ============ INIT ============
+        // --- GRID KEYBOARD NAVIGATION STATE ---
+        let gridCurR = 0;
+        let gridCurC = 0;
+
+        function updateGridSelection() {
+            // Remove previous
+            document.querySelectorAll('.grid-cell.selected').forEach(el => el.classList.remove('selected'));
+
+            // Validate bounds
+            if (gridCurR < 0) gridCurR = 0;
+            if (gridCurR >= rows.length) gridCurR = rows.length - 1;
+
+            // Ensure gridCurC is within bounds for the current row
+            if (gridCurC < 0) gridCurC = 0;
+            if (gridCurC >= rows[gridCurR].length) gridCurC = rows[gridCurR].length - 1;
+
+            // Find and highlight new
+            const nextCell = document.querySelector(`.grid-cell[data-r="${gridCurR}"][data-c="${gridCurC}"]`);
+            if (nextCell) {
+                nextCell.classList.add('selected');
+                nextCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function moveGridSelection(dr, dc) {
+            gridCurR += dr;
+            gridCurC += dc;
+            updateGridSelection();
+        }
+
         buildGrid();
+        // Initialize hover selection 
+        updateGridSelection();
 
     </script>
 </body>
